@@ -1,0 +1,5 @@
+config:
+  AzureFunctionSQLBindings:sqlAdminLogin: globalSqlAdmin
+  AzureFunctionSQLBindings:sqlAdminPassword:
+    secure: AAABADOvvWVWBYQzCtw2aPkzktqJaxGaO7RFhLJqZE5w7z/Pnv+OwSzlvvINDPuqYGI=
+  azure-native:location: westeurope

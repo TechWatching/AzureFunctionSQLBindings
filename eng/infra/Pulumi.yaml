@@ -1,0 +1,3 @@
+name: AzureFunctionSQLBindings
+runtime: dotnet
+description: Function App that uses SQL Bindings.
