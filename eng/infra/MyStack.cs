@@ -7,8 +7,13 @@ using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.Storage;
 using Pulumi.AzureNative.Web;
 using Pulumi.AzureNative.Web.Inputs;
+using Pulumi.AzureNative.OperationalInsights;
 using Deployment = Pulumi.Deployment;
 using Sql = Pulumi.AzureNative.Sql;
+// Use specific versions for Application Insights
+using Component = Pulumi.AzureNative.Insights.V20200202.Component;
+using ComponentArgs = Pulumi.AzureNative.Insights.V20200202.ComponentArgs;
+using ApplicationType = Pulumi.AzureNative.Insights.V20200202.ApplicationType;
 
 class MyStack : Stack
 {
@@ -39,6 +44,24 @@ class MyStack : Stack
                 EnableRbacAuthorization = true,
                 TenantId = Output.Create(GetTenantId())
             },
+            ResourceGroupName = resourceGroup.Name,
+        });
+
+        var logAnalyticsWorkspace = new Workspace($"log-sqlbindings-{Deployment.Instance.StackName}", new WorkspaceArgs
+        {
+            ResourceGroupName = resourceGroup.Name,
+            Sku = new Pulumi.AzureNative.OperationalInsights.Inputs.WorkspaceSkuArgs
+            {
+                
+                Name = WorkspaceSkuNameEnum.PerGB2018
+            }
+        });
+
+        var applicationInsights = new Component($"appi-sqlbindings-{Deployment.Instance.StackName}", new ComponentArgs
+        {
+            ApplicationType = ApplicationType.Web,
+            Kind = "web",
+            WorkspaceResourceId = logAnalyticsWorkspace.Id,
             ResourceGroupName = resourceGroup.Name,
         });
 
@@ -88,11 +111,21 @@ class MyStack : Stack
                     },
                     new NameValuePairArgs
                     {
+                        Name = "APPINSIGHTS_INSTRUMENTATIONKEY",
+                        Value = applicationInsights.InstrumentationKey
+                    },
+                    new NameValuePairArgs
+                    {
+                        Name = "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                        Value = applicationInsights.ConnectionString
+                    },
+                    new NameValuePairArgs
+                    {
                         Name = "VaultUri",
                         Value = keyvault.Properties.Apply(v => v.VaultUri)
                     }
-                },
-            },
+                }
+            }
         });
 
         FunctionAppUri = functionApp.DefaultHostName;
