@@ -31,7 +31,7 @@ class MyStack : Stack
             Kind = Kind.StorageV2
         });
 
-        var keyvault = new Vault($"kv-sqlb-{Deployment.Instance.StackName}", new VaultArgs
+        var keyvault = new Vault($"kv-sqlbindings-{Deployment.Instance.StackName}", new VaultArgs
         {
             Properties = new VaultPropertiesArgs
             {
