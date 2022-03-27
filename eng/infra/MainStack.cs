@@ -11,13 +11,12 @@ using Pulumi.AzureNative.OperationalInsights;
 using Deployment = Pulumi.Deployment;
 using Sql = Pulumi.AzureNative.Sql;
 // Use specific versions for Application Insights
-using Component = Pulumi.AzureNative.Insights.V20200202.Component;
-using ComponentArgs = Pulumi.AzureNative.Insights.V20200202.ComponentArgs;
-using ApplicationType = Pulumi.AzureNative.Insights.V20200202.ApplicationType;
+using Pulumi.AzureNative.Insights.V20200202;
+using AzureFunctionSQLBindings.Infra.Roles;
 
-class MyStack : Stack
+class MainStack : Stack
 {
-    public MyStack()
+    public MainStack()
     {
         var resourceGroup = new ResourceGroup($"rg-sqlbindings-{Deployment.Instance.StackName}");
 
@@ -52,7 +51,6 @@ class MyStack : Stack
             ResourceGroupName = resourceGroup.Name,
             Sku = new Pulumi.AzureNative.OperationalInsights.Inputs.WorkspaceSkuArgs
             {
-                
                 Name = WorkspaceSkuNameEnum.PerGB2018
             }
         });
@@ -128,13 +126,13 @@ class MyStack : Stack
             }
         });
 
-        FunctionAppUri = functionApp.DefaultHostName;
+        QueryDatabaseFunctionUrl = Output.Format($"https://{functionApp.DefaultHostName}/api/QueryDatabase");
 
         var storageBlobDataOwnerRole = new RoleAssignment("storageBlobDataOwner", new RoleAssignmentArgs
         {
             PrincipalId = functionApp.Identity.Apply(i => i.PrincipalId),
             PrincipalType = PrincipalType.ServicePrincipal,
-            RoleDefinitionId = "/providers/Microsoft.Authorization/roleDefinitions/b7e6dc6d-f1e8-4753-8033-0f276bb0955b",
+            RoleDefinitionId = BuiltInRolesIds.StorageBlobDataOwner,
             Scope = storageAccount.Id
         });
 
@@ -186,10 +184,16 @@ class MyStack : Stack
         {
             PrincipalId = functionApp.Identity.Apply(i => i.PrincipalId),
             PrincipalType = PrincipalType.ServicePrincipal,
-            RoleDefinitionId = "/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6",
+            RoleDefinitionId = BuiltInRolesIds.KeyVaultSecretsUser,
             Scope = keyvault.Id
         });
     }
+
+    [Output]
+    public Output<string> SqlDatabaseConnectionString { get; set; }
+
+    [Output]
+    public Output<string> QueryDatabaseFunctionUrl { get; set; }
 
     public async Task<string> GetTenantId()
     {
@@ -197,10 +201,4 @@ class MyStack : Stack
         var tenantId = clientConfig.TenantId;
         return tenantId;
     }
-
-    [Output]
-    public Output<string> SqlDatabaseConnectionString { get; set; }
-
-    [Output]
-    public Output<string> FunctionAppUri { get; set; }
 }
