@@ -1,10 +1,12 @@
-﻿using Pulumi;
+﻿using System.Threading.Tasks;
+using Pulumi;
 using Pulumi.AzureNative.Authorization;
 using Pulumi.AzureNative.KeyVault;
 using Pulumi.AzureNative.KeyVault.Inputs;
 using Pulumi.AzureNative.Resources;
-using System.Threading.Tasks;
 using Deployment = Pulumi.Deployment;
+
+namespace AzureFunctionSQLBindings.Infra;
 
 class SQLBindingsStack : Stack
 {
